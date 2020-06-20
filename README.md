@@ -9,3 +9,4 @@ Notes:
     * Training on any torchvision dataset
     * Including mixup training, manifold mixup training
     * Tensorboard dev logs of full training runs
+    * Exploring more of what PyTorch Lightning offers for a later blog post
