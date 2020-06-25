@@ -1,5 +1,4 @@
 import argparse
-import os
 from pytorch_lightning.core.lightning import LightningModule
 import torch
 import torch.nn as nn
@@ -86,6 +85,6 @@ class SimCLRModel(LightningModule):
         parser.add_argument('--pretrained', type=bool, default='True')
         parser.add_argument('--projection_dim', type=int, default=64)
         parser.add_argument('--temperature', type=float, default=0.5)
-        parser.add_argument('--download', type=bool, default=False)
+        parser.add_argument('--download', action='store_true')
         parser.add_argument('--data_dir', type=str, default='/home/ubuntu/data')
         return parser
