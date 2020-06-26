@@ -5,18 +5,26 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 import torchvision
 
-from .datasets import get_train_transforms, get_val_transforms, SimCLRDataset
-from .loss import NTXEntCriterion
+import simclr.data as data
+from simclr.data import (  # noqa: F401
+    get_train_transforms, get_val_transforms, SimCLRDataset,
+    CIFAR10,
+    CIFAR100,
+    STL10,
+    SVHN,
+)
+from simclr.loss import NTXEntCriterion
 
 
 class SimCLRModel(LightningModule):
     """SimCLR training network for a generic torchvision model (restricted to `allowed_models`). """
 
     allowed_models = ['resnet18', 'resnet34', 'resnet50', 'resnet101', 'resnet152']
+    allowed_datasets = ['CIFAR10', 'CIFAR100', 'STL10', 'SVHN']
 
     def __init__(
         self, model_name='resnet18', pretrained=True, projection_dim=64, temperature=0.5,
-        download=False, data_dir='/home/ubuntu/data'
+        download=False, dataset='CIFAR10', data_dir='/home/ubuntu/data'
     ):
         super().__init__()
         assert model_name in self.allowed_models, f"Please pick one of: {self.allowed_models}"
@@ -24,6 +32,10 @@ class SimCLRModel(LightningModule):
         self.model = nn.Sequential(*layers[:-1])
         self.projection_head = nn.Linear(layers[-1].in_features, projection_dim)
         self.loss = NTXEntCriterion(temperature=temperature)
+        assert hasattr(data, dataset), \
+            f'Dataset {dataset} is not available in this training workflow, please pick one of: ' \
+            f'{self.allowed_datasets}.'
+        self.dataset = dataset
         self.download = download
         self.data_dir = data_dir
         self.save_hyperparameters()
@@ -54,11 +66,11 @@ class SimCLRModel(LightningModule):
 
     def prepare_data(self):
         train_transforms, val_transforms = get_train_transforms(), get_val_transforms()
-        train_dataset = torchvision.datasets.CIFAR10(
+        train_dataset = getattr(data, self.dataset)(
             self.data_dir, train=True, download=self.download, transform=train_transforms
         )
         self.train_dataset = SimCLRDataset(train_dataset)
-        val_dataset = torchvision.datasets.CIFAR10(
+        val_dataset = getattr(data, self.dataset)(
             self.data_dir, train=False, download=self.download, transform=val_transforms
         )
         self.val_dataset = SimCLRDataset(val_dataset)
@@ -85,6 +97,7 @@ class SimCLRModel(LightningModule):
         parser.add_argument('--pretrained', type=bool, default='True')
         parser.add_argument('--projection_dim', type=int, default=64)
         parser.add_argument('--temperature', type=float, default=0.5)
+        parser.add_argument('--dataset', type=str, default='CIFAR10')
         parser.add_argument('--download', action='store_true')
         parser.add_argument('--data_dir', type=str, default='/home/ubuntu/data')
         return parser

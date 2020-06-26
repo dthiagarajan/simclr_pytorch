@@ -2,11 +2,22 @@
 
 Implements the SimCLR formulation for any `torchvision` model in PyTorch Lightning. Heavily inspired from [another SimCLR implementation on Github](https://github.com/Spijkervet/SimCLR/).
 
-Notes:
-* Currently only allows ResNet models
-* Currently only trains on CIFAR10
-* Will be updated to include
-    * Training on any torchvision dataset
-    * Including mixup training, manifold mixup training
-    * Tensorboard dev logs of full training runs
-    * Exploring more of what PyTorch Lightning offers for a later blog post
+Allowed datasets:
+* CIFAR10
+* CIFAR100
+* STL10
+* SVHN
+
+Allowed models:
+* ResNet 18
+* ResNet 34
+* ResNet 50
+* ResNet 101
+* ResNet 152
+
+Capable of:
+* Mixup training (on the data or on the input to any layer, including the projection head)
+
+Will be updated to include
+* Tensorboard dev logs of full training runs (code has only been tested using `fast_dev_run`.)
+* Exploring more of what PyTorch Lightning offers for a later blog post
