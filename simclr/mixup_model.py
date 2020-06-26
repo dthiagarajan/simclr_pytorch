@@ -17,7 +17,8 @@ class SimCLRMixupModel(SimCLRModel):
         mixup_layer=-1
     ):
         super().__init__(
-            model_name, pretrained, projection_dim, temperature, download, dataset, data_dir
+            model_name, pretrained, projection_dim, temperature, download, dataset, data_dir,
+            save_hparams=False
         )
         self.model = nn.ModuleList(list(self.model.children()))
         self.alpha = alpha
@@ -37,17 +38,20 @@ class SimCLRMixupModel(SimCLRModel):
                 f'Mixup layer specified is too large, please specify a number in '
                 f'[0, {len(self.model)}].'
             )
+        self.save_hyperparameters(
+            'model_name', 'pretrained', 'projection_dim', 'temperature', 'alpha', 'mixup_layer'
+        )
 
     def forward(self, x):
         out = x
         for i, layer in enumerate(self.model):
             if i == self.mixup_layer:
-                out = SimCLRDataset.mixup(out, alpha=self.alpha)
+                out, _ = SimCLRDataset.mixup(out, alpha=self.alpha)
             out = layer(out)
         out = out.view(x.size(0), -1)
 
         if self.mixup_layer == len(self.model):
-            out = SimCLRDataset.mixup(out, alpha=self.alpha)
+            out, _ = SimCLRDataset.mixup(out, alpha=self.alpha)
         out = self.projection_head(out)
         return out
 

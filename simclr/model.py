@@ -24,7 +24,7 @@ class SimCLRModel(LightningModule):
 
     def __init__(
         self, model_name='resnet18', pretrained=True, projection_dim=64, temperature=0.5,
-        download=False, dataset='CIFAR10', data_dir='/home/ubuntu/data'
+        download=False, dataset='CIFAR10', data_dir='/home/ubuntu/data', save_hparams=True
     ):
         super().__init__()
         assert model_name in self.allowed_models, f"Please pick one of: {self.allowed_models}"
@@ -38,7 +38,8 @@ class SimCLRModel(LightningModule):
         self.dataset = dataset
         self.download = download
         self.data_dir = data_dir
-        self.save_hyperparameters()
+        if save_hparams:
+            self.save_hyperparameters('model_name', 'pretrained', 'projection_dim', 'temperature')
 
     def forward(self, x):
         out = self.model(x)

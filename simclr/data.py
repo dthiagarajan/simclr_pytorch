@@ -27,7 +27,7 @@ class SimCLRDataset(Dataset):
         return len(self.dataset)
 
     @staticmethod
-    def mixup(self, x, alpha=0.4):
+    def mixup(x, alpha=0.4):
         batch_size = x.size()[0] // 2
         if alpha > 0:
             lam = np.random.beta(alpha, alpha, batch_size)
@@ -39,8 +39,10 @@ class SimCLRDataset(Dataset):
                 lam = lam.cuda()
         else:
             lam = 1.
+        # This is SimCLR specific - we want to use the same mixing for the augmented pairs
+        lam = torch.cat([lam, lam])
         index = torch.randperm(batch_size)
-        # This is SimCLR specific - we want to use the same permutation on the augmented pair
+        # This is SimCLR specific - we want to use the same permutation on the augmented pairs
         index = torch.cat([index, batch_size + index])
         if torch.cuda.is_available():
             index = index.cuda()
