@@ -2,6 +2,9 @@
 
 Example usage:
 python train.py --model_name resnet18 --projection_dim 64 --fast_dev_run True
+
+To run with a single GPU:
+python train.py --model_name resnet18 --projection_dim 64 --fast_dev_run True --gpus 1
 """
 import argparse
 from pytorch_lightning import Trainer
@@ -38,6 +41,8 @@ if __name__ == '__main__':
             dataset=args.dataset,
             download=args.download,
             data_dir=args.data_dir,
+            batch_size=args.batch_size,
+            image_size=args.image_size,
             alpha=args.alpha,
             mixup_layer=args.mixup_layer
         )
@@ -51,6 +56,8 @@ if __name__ == '__main__':
             dataset=args.dataset,
             download=args.download,
             data_dir=args.data_dir,
+            batch_size=args.batch_size,
+            image_size=args.image_size
         )
     trainer = Trainer.from_argparse_args(args)
     trainer.fit(model)

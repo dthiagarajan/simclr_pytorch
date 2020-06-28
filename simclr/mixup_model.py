@@ -13,14 +13,15 @@ class SimCLRMixupModel(SimCLRModel):
 
     def __init__(
         self, model_name='resnet18', pretrained=True, projection_dim=64, temperature=0.5,
-        download=False, dataset='CIFAR10', data_dir='/home/ubuntu/data', alpha=0.4,
-        mixup_layer=-1
+        download=False, dataset='CIFAR10', data_dir='/home/ubuntu/data', batch_size=128,
+        image_size=32, alpha=0.4, mixup_layer=-1
     ):
         super().__init__(
             model_name, pretrained, projection_dim, temperature, download, dataset, data_dir,
             save_hparams=False
         )
         self.model = nn.ModuleList(list(self.model.children()))
+        self.batch_size = batch_size
         self.alpha = alpha
         self.mixup_layer = mixup_layer
         if self.mixup_layer == -1:
@@ -39,7 +40,8 @@ class SimCLRMixupModel(SimCLRModel):
                 f'[0, {len(self.model)}].'
             )
         self.save_hyperparameters(
-            'model_name', 'pretrained', 'projection_dim', 'temperature', 'alpha', 'mixup_layer'
+            'model_name', 'pretrained', 'projection_dim', 'temperature', 'batch_size',
+            'alpha', 'mixup_layer'
         )
 
     def forward(self, x):
