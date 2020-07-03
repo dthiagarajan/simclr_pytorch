@@ -24,7 +24,8 @@ class SimCLRModel(LightningModule):
 
     def __init__(
         self, model_name='resnet18', pretrained=True, projection_dim=64, temperature=0.5,
-        download=False, dataset='CIFAR10', data_dir='/home/ubuntu/data', save_hparams=True
+        download=False, dataset='CIFAR10', data_dir='/home/ubuntu/data', 
+        batch_size=128, image_size=224, save_hparams=True
     ):
         super().__init__()
         assert model_name in self.allowed_models, f"Please pick one of: {self.allowed_models}"
@@ -38,8 +39,13 @@ class SimCLRModel(LightningModule):
         self.dataset = dataset
         self.download = download
         self.data_dir = data_dir
+        self.batch_size = batch_size
+        self.image_size = image_size
         if save_hparams:
-            self.save_hyperparameters('model_name', 'pretrained', 'projection_dim', 'temperature')
+            self.save_hyperparameters(
+                'model_name', 'pretrained', 'projection_dim', 'temperature', 'batch_size',
+                'image_size'
+            )
 
     def forward(self, x):
         out = self.model(x)
@@ -49,15 +55,23 @@ class SimCLRModel(LightningModule):
 
     def training_step(self, batch, batch_idx):
         projections = self(batch)
-        loss = self.loss(projections)  # Change to SimCLR Loss
+        loss = self.loss(projections)
         tensorboard_logs = {'train_loss': loss}
         return {'loss': loss, 'log': tensorboard_logs}
+
+    def training_epoch_end(self, outputs):
+        loss_mean = torch.stack([x['loss'] for x in outputs]).mean()
+        return {'train_loss': loss_mean}
 
     def validation_step(self, batch, batch_idx):
         projections = self(batch)
         loss = self.loss(projections)
         tensorboard_logs = {'val_loss': loss}
-        return {'val_loss': loss, 'log': tensorboard_logs}
+        return {'loss': loss, 'log': tensorboard_logs}
+
+    def validation_epoch_end(self, outputs):
+        val_loss_mean = torch.stack([x['loss'] for x in outputs]).mean()
+        return {'val_loss': val_loss_mean}
 
     def configure_optimizers(self):
         return torch.optim.Adam([
@@ -66,7 +80,9 @@ class SimCLRModel(LightningModule):
         ])
 
     def prepare_data(self):
-        train_transforms, val_transforms = get_train_transforms(), get_val_transforms()
+        train_transforms, val_transforms = (
+            get_train_transforms(size=self.image_size), get_val_transforms(size=self.image_size)
+        )
         train_dataset = getattr(data, self.dataset)(
             self.data_dir, train=True, download=self.download
         )
@@ -81,13 +97,13 @@ class SimCLRModel(LightningModule):
 
     def train_dataloader(self):
         return DataLoader(
-            self.train_dataset, batch_size=32, num_workers=0, shuffle=True,
+            self.train_dataset, batch_size=self.batch_size, num_workers=4, shuffle=True,
             collate_fn=self.collate_fn
         )
 
     def val_dataloader(self):
         return DataLoader(
-            self.val_dataset, batch_size=32, num_workers=0, shuffle=False,
+            self.val_dataset, batch_size=self.batch_size, num_workers=4, shuffle=False,
             collate_fn=self.collate_fn
         )
 
@@ -101,4 +117,6 @@ class SimCLRModel(LightningModule):
         parser.add_argument('--dataset', type=str, default='CIFAR10')
         parser.add_argument('--download', action='store_true')
         parser.add_argument('--data_dir', type=str, default='/home/ubuntu/data')
+        parser.add_argument('--batch_size', type=int, default=128)
+        parser.add_argument('--image_size', type=int, default=32)
         return parser
