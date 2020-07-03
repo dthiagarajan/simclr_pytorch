@@ -68,13 +68,13 @@ class SimCLRModel(LightningModule):
     def prepare_data(self):
         train_transforms, val_transforms = get_train_transforms(), get_val_transforms()
         train_dataset = getattr(data, self.dataset)(
-            self.data_dir, train=True, download=self.download, transform=train_transforms
+            self.data_dir, train=True, download=self.download
         )
-        self.train_dataset = SimCLRDataset(train_dataset)
+        self.train_dataset = SimCLRDataset(train_dataset, train_transforms)
         val_dataset = getattr(data, self.dataset)(
-            self.data_dir, train=False, download=self.download, transform=val_transforms
+            self.data_dir, train=False, download=self.download
         )
-        self.val_dataset = SimCLRDataset(val_dataset)
+        self.val_dataset = SimCLRDataset(val_dataset, val_transforms)
 
     def collate_fn(self, batch):
         return torch.cat([torch.stack([b[0] for b in batch]), torch.stack([b[1] for b in batch])])

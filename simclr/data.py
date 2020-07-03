@@ -6,14 +6,16 @@ from torchvision import transforms
 
 
 class SimCLRDataset(Dataset):
-    def __init__(self, dataset):
+    def __init__(self, dataset, transform):
         """Initialize a wrapper of a generic image classification dataset for SimCLR training.
 
         Args:
             dataset (torch.utils.data.Dataset): an image PyTorch dataset - when iterating over it
                 it should return something of the form (image) or (image, label).
+            transform (torchvision.Transforms): a set of a transforms to apply to the image
         """
         self.dataset = dataset
+        self.transform = transform
 
     def __getitem__(self, index):
         dataset_item = self.dataset[index]
@@ -21,7 +23,8 @@ class SimCLRDataset(Dataset):
             image = dataset_item[0]
         else:
             image = dataset_item
-        return image, image
+
+        return self.transform(image), self.transform(image)
 
     def __len__(self):
         return len(self.dataset)
@@ -79,23 +82,19 @@ CIFAR10 = datasets.CIFAR10
 CIFAR100 = datasets.CIFAR100
 
 
-def STL10(root, train=True, download=False, transform=None):
+def STL10(root, train=True, download=False):
     if train:
         dataset_class = 'train+unlabeled'
     else:
         dataset_class = 'test'
     print(f'Retrieving/downloading {dataset_class} set of STL10 dataset.')
-    return datasets.STL10(
-        root, split=dataset_class, download=download, transform=transform
-    )
+    return datasets.STL10(root, split=dataset_class, download=download)
 
 
-def SVHN(root, train=True, download=False, transform=None):
+def SVHN(root, train=True, download=False):
     if train:
         dataset_class = 'train'
     else:
         dataset_class = 'test'
     print(f'Retrieving/downloading {dataset_class} set of SVHN dataset.')
-    return datasets.SVHN(
-        root, split=dataset_class, download=download, transform=transform
-    )
+    return datasets.SVHN(root, split=dataset_class, download=download)
